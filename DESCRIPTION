@@ -1,0 +1,52 @@
+Package: EasySILAC
+Type: Package
+Title: SILAC Protein Turnover Analysis with R and Rust Fitting Engines
+Version: 0.1.0
+Authors@R:
+    c(
+      person("Yunhui Kong", role =c("aut","cre"),email = "kongyunhui1@gamil.com")
+      )
+Author: Yunhui Kong [aut, cre]
+Maintainer: Yunhui Kong <kongyunhui1@gamil.com>
+Description: Fitting (steady-state and non-steady-state), global
+    labeling-efficiency (Hill) correction, quality control and visualization
+    for pulsed SILAC proteomics data. Fitting is available in a pure-R
+    implementation and a numerically identical, much faster Rust
+    implementation (compiled on demand via rextendr).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+URL: https://github.com/yuanlizhanshi/EasySILAC
+BugReports: https://github.com/yuanlizhanshi/EasySILAC/issues
+Imports:
+    EasyProtein,
+    dplyr,
+    ggplot2,
+    ggpubr,
+    ggpointdensity,
+    ggrepel,
+    viridis,
+    cowplot,
+    tibble,
+    tidyr,
+    purrr,
+    stringr,
+    scales,
+    glue,
+    rlang,
+    matrixStats,
+    minpack.lm,
+    stats,
+    grDevices,
+    grid,
+    utils,
+    SummarizedExperiment,
+    S4Vectors
+Suggests:
+    rextendr,
+    furrr,
+    knitr,
+    rmarkdown
+Remotes: yuanlizhanshi/EasyProtein
+VignetteBuilder: knitr
+Config/roxygen2/version: 8.0.0

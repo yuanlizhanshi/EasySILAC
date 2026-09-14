@@ -1,0 +1,63 @@
+---
+title: "EasySILAC quick start"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{EasySILAC quick start}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(EasySILAC)
+```
+
+## Simulate a heavy-ratio time course
+
+```{r}
+set.seed(1)
+t <- rep(c(1, 2, 4, 6), each = 4)
+k_true <- 0.25
+ratio <- 1 - 0.95 * exp(-k_true * t)
+ratio_obs <- pmin(pmax(ratio + rnorm(length(t), 0, 0.02), 0.001), 0.999)
+total_obs <- 100 * (1 + 0.02 * t) + rnorm(length(t), 0, 2)
+```
+
+## Steady-state fit (R engine)
+
+```{r}
+fit_silac(ratio = ratio_obs, t = t, Peptide = "toy_protein", total = total_obs)
+```
+
+## Steady-state fit (Rust engine)
+
+Requires `rextendr` and a Rust toolchain; compiled once per machine.
+
+```{r eval = requireNamespace("rextendr", quietly = TRUE)}
+fit_silac_rust(ratio = ratio_obs, t = t, Peptide = "toy_protein", total = total_obs)
+```
+
+## Non-steady-state fit
+
+```{r}
+fit_silac_nonsteady(ratio = ratio_obs, total = total_obs, t = t, Peptide = "toy_protein")
+```
+
+## Switch engines globally
+
+```{r eval = requireNamespace("rextendr", quietly = TRUE)}
+silac_use_rust(TRUE)
+fit_silac(ratio = ratio_obs, t = t, Peptide = "toy_protein", total = total_obs)
+silac_use_rust(FALSE)
+```
+
+## Global labeling-efficiency (Hill) correction
+
+Given mean heavy ratios per sample (H100/H75/H50) and time point, fit the
+efficiency curve `E(x) = x^h / (K^h + x^h)`:
+
+```{r eval = FALSE}
+hill <- fit_hill_labelling_efficiency(global_full_ratio)
+hill$K; hill$h; hill$lambda
+hill$plots$p_collapse  # corrected ratios collapse onto one curve
+```
