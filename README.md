@@ -68,6 +68,21 @@ hill <- fit_hill_labelling_efficiency(global_full_ratio)
 
 See `vignette("quickstart", package = "EasySILAC")` for a complete worked example.
 
+## Benchmark
+
+Measured on a 12-core machine with real data (SILAC D0, 160k peptides x 16
+samples; 7.7k proteins):
+
+| Task | R engine | Rust engine | Speedup |
+|------|----------|-------------|---------|
+| Peptide steady-state fit, one concentration (160,625 peptides) | 544 s | 0.26 s | **~2000x** |
+| Full peptide fitting step, one day x 3 concentrations | 34.9 min | 76 s | **~28x** |
+| Full pipeline (peptide + protein + Hill + adjusted fits), one day | ~45-50 min | 11.4 min | **~4x** |
+
+The Rust engine is numerically identical to the R engine (max difference
+~1e-14 on all fit statistics, verified on the full D0 dataset), so results are
+interchangeable.
+
 ## Note
 
 `geom_mean` and `df2mtx` are re-exported from EasyProtein. EasySILAC keeps its
