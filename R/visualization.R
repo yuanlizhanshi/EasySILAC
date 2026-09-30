@@ -799,17 +799,20 @@ plot_protein_silac_nonsteady_fit <- function(
 #' @return A ggplot object.
 #' @export
 
-# log10 axis style matching the NB4_project figures: real 10^n superscripts
-# on a 0.5/1-decade break grid (never 10^0.477).
-.easysilac_log10_labels <- function(x) parse(text = paste0("10^", log10(x)))
-.easysilac_log10_breaks <- function(z, max_ticks = 10) {
-  r <- log10(range(z, na.rm = TRUE))
-  for (s in c(0.5, 1)) {
-    lo <- floor(r[1] / s) * s
-    hi <- ceiling(r[2] / s) * s
-    if (round((hi - lo) / s) + 1 <= max_ticks) return(10^seq(lo, hi, by = s))
-  }
-  10^seq(floor(r[1]), ceiling(r[2]))
+# Scientific-notation axis labels: "10^-3" or "2x10^-3" with a real superscript,
+# on a LINEAR scale (the project Y axes are linear, not log).
+.easysilac_sci_labels <- function(x) {
+  out <- lapply(x, function(v) {
+    if (!is.finite(v)) return(NA)
+    if (v == 0) return("0")
+    e <- floor(log10(abs(v)))
+    m <- v / 10^e
+    m <- round(m, 2)
+    if (m == 10) { m <- 1; e <- e + 1 }          # 9.97 -> 1x10^(e+1)
+    if (m == 1) sprintf("10^%d", e)
+    else sprintf("%g%%*%%10^%d", m, e)
+  })
+  lapply(out, function(s) if (is.na(s)) NA else parse(text = s)[[1]])
 }
 
 plot_protein_silac_nonsteady_adjust_fit <-function(
@@ -1131,11 +1134,9 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
       scale_x_continuous(
         breaks = sort(unique(df_obs$t))
       ) +
-      scale_y_log10(
-        breaks = .easysilac_log10_breaks,
-        labels = .easysilac_log10_labels
+      scale_y_continuous(
+        labels = .easysilac_sci_labels
       ) +
-      annotation_logticks(sides = "l") +
       labs(
         x = "Time (h)",
         y = ylab,
