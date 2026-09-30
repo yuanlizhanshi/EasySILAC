@@ -789,6 +789,12 @@ plot_protein_silac_nonsteady_fit <- function(
 #'   corrected by the global Hill labeling efficiency.
 #'
 #' @inheritParams plot_protein_silac_nonsteady_fit
+#' @param ylab Y-axis label of the intensity plot. Default `"Concentration"`.
+#'   Accepts a string or a plotmath expression, e.g. `expression(psi[p*","*i])`.
+#' @param norm_scale Numeric; target scale of the intensity Y axis. The `conc`
+#'   assay stores per-million normalized intensities, so plotted values are
+#'   `value * norm_scale / 1e6`. Default `1e6` keeps the per-million scale;
+#'   set to `1` to show the fraction of total intensity.
 #'
 #' @return A ggplot object.
 #' @export
@@ -801,6 +807,8 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
     plot_type = c("ratio", "intensity"),
     ratio_assay = "ratio",
     conc_assay = "conc",
+    ylab = "Concentration",
+    norm_scale = 1e6,
     eps = 1e-6
 ) {
   
@@ -1011,34 +1019,38 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
     )
     
     df_obs <- df_obs0
-    
+
+    # Y 轴尺度：conc assay 为 per-million 归一化强度，
+    # norm_scale = 1e6 保持原尺度；norm_scale = 1 显示占总强度的分数 (psi)
+    scale_factor <- norm_scale / 1e6
+
     df_long <- rbind(
       data.frame(
         t = df_obs$t,
-        value = df_obs$new,
+        value = df_obs$new * scale_factor,
         type = "new"
       ),
       data.frame(
         t = df_obs$t,
-        value = df_obs$old,
+        value = df_obs$old * scale_factor,
         type = "old"
       ),
       data.frame(
         t = df_obs$t,
-        value = df_obs$total,
+        value = df_obs$total * scale_factor,
         type = "total"
       )
     )
-    
+
     df_pred <- rbind(
       data.frame(
         t = t_pred,
-        value = new_pred_raw,
+        value = new_pred_raw * scale_factor,
         type = "new_fit"
       ),
       data.frame(
         t = t_pred,
-        value = old_pred_raw,
+        value = old_pred_raw * scale_factor,
         type = "old_fit"
       )
     ) %>%
@@ -1065,7 +1077,8 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
       geom_line(
         data = df_obs %>%
           dplyr::group_by(t) %>%
-          dplyr::summarise(value = mean(total, na.rm = TRUE), .groups = "drop") %>%
+          dplyr::summarise(value = mean(total, na.rm = TRUE) * scale_factor,
+                           .groups = "drop") %>%
           dplyr::mutate(type = "total"),
         aes(x = t, y = value, color = type, group = type),
         linewidth = 0.7,
@@ -1105,10 +1118,13 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
         breaks = sort(unique(df_obs$t))
       ) +
       labs(
-        x = "Time",
-        y = "Concentration",
-        title = plot_title,
-        subtitle = peptide,
+        x = "Time (h)",
+        y = ylab,
+        title = peptide,
+        subtitle = paste0(
+          "k = ", signif(k, 3),
+          "    Half-life = ", signif(hl, 3), " h"
+        ),
         color = NULL
       ) +
       theme_test(base_size = 14)
