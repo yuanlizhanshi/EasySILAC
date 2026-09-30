@@ -958,7 +958,7 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
   # ratio mode
   # ============================================================
   if (plot_type == "ratio") {
-    
+
     df_pred_ratio <- data.frame(
       t = t_pred,
       new_ratio = new_ratio_pred
@@ -967,10 +967,7 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
         is.finite(t),
         is.finite(new_ratio)
       )
-    
-    x_text <- min(df_obs0$t, na.rm = TRUE) +
-      0.08 * diff(range(df_obs0$t, na.rm = TRUE))
-    
+
     p <- ggplot() +
       geom_point(
         data = df_obs0,
@@ -989,28 +986,16 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
       ) +
       coord_cartesian(ylim = c(0, 1)) +
       labs(
-        x = "Time",
-        y = "New fraction / ratio",
-        title = plot_title,
-        subtitle = peptide
-      ) +
-      annotate(
-        "text",
-        x = x_text,
-        y = 0.82,
-        hjust = 0,
-        vjust = 1,
-        fontface = "bold",
-        label = paste0(
+        x = "Time (h)",
+        y = "H ratio",
+        title = peptide,
+        subtitle = paste0(
           "k = ", signif(k, 3),
-          "\ns = ", signif(s_fit, 3),
-          "\nHalf-life = ", signif(hl, 3),
-          "\nR\u00B2 old = ", round(r2_old, 2),
-          "\nnRMSE = ", round(nrmse_total_fit, 2)
+          "    Half-life = ", signif(hl, 3), " h"
         )
       ) +
       theme_test(base_size = 14)
-    
+
     return(p)
   }
   
@@ -1076,13 +1061,12 @@ plot_protein_silac_nonsteady_adjust_fit <-function(
         size = 2.5,
         alpha = 0.85
       ) +
-      # observed lines: new / old / total 都只连接真实点
+      # observed total line: 连接每个时间点的均值（不在时间点内部串线）
       geom_line(
-        data =       data.frame(
-          t = df_obs$t,
-          value = df_obs$total,
-          type = "total"
-        ),
+        data = df_obs %>%
+          dplyr::group_by(t) %>%
+          dplyr::summarise(value = mean(total, na.rm = TRUE), .groups = "drop") %>%
+          dplyr::mutate(type = "total"),
         aes(x = t, y = value, color = type, group = type),
         linewidth = 0.7,
         alpha = 0.75
